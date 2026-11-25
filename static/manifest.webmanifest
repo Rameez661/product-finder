@@ -1,0 +1,11 @@
+{
+  "name": "Product Finder",
+  "short_name": "Product Finder",
+  "description": "Ek product search karein: sab stores mein sasta aur behtar kahan hai.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6fa",
+  "theme_color": "#1c5cd6",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

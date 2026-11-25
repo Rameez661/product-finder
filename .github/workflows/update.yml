@@ -1,0 +1,64 @@
+name: Update prices and publish site
+
+on:
+  schedule:
+    - cron: "0 1 * * *"   # every day at 06:00 Pakistan time
+  workflow_dispatch:       # "Run workflow" button on the Actions tab
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install numpy (the only library used)
+        run: pip install numpy
+
+      # product lists and last known prices from earlier runs: faster, and gentler on the stores
+      - uses: actions/cache@v4
+        with:
+          path: data
+          key: store-cache-${{ github.run_id }}
+          restore-keys: store-cache-
+
+      - name: Collect prices (robots.txt respected, max 2 requests at a time per store)
+        env:
+          SNAPSHOT_MAX_PAGES: "3000"
+          SNAPSHOT_MAX_MINUTES: "40"
+        run: python snapshot.py
+
+      - name: Build the site
+        run: |
+          mkdir -p _site
+          cp hosted/index.html _site/
+          python hosted/build_data.py _site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

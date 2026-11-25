@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Product Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a quick, honest shopping tool; prices first, no fluff.
+   IDEA: a price board at a market: one line of offers per product, the cheapest lit up.
+   PICTURE: the search box and the live result list are the picture, opened mid-use.
+   COLOUR and TYPE: white ground, ink black, metro blue for actions, green for good deals, amber for warnings; Figtree.
+   LAYOUT: sticky search bar, understood-chips, summary row, filter strip, multi-column offer grid, load more. */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0e1116);--panel:light-dark(#f4f6f9,#171b22);--ink:light-dark(#121418,#eef1f6);
+  --muted:light-dark(#5d6573,#9aa3b2);--line:light-dark(#e2e6ec,#2a303b);--blue:light-dark(#0a5cff,#6c9cff);--blue-ink:light-dark(#fff,#0b1220);
+  --green:light-dark(#00804a,#4fd18c);--green-bg:light-dark(#e3f5ec,#14301f);--amber:light-dark(#8a5a00,#f0c060);--amber-bg:light-dark(#fff3d6,#33290f);
+  --red:#e6261f;--soft:light-dark(#e8efff,#1c2a47)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Figtree,system-ui,sans-serif;overflow-x:clip}
+a{color:inherit}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{max-width:1440px;margin:0 auto;padding:12px max(3vw,14px)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;margin-bottom:10px}
+.brand i{width:26px;height:26px;border-radius:7px;background:var(--blue);display:inline-block;position:relative}
+.brand i::after{content:"";position:absolute;inset:7px 7px auto auto;width:8px;height:8px;border-radius:50%;background:var(--blue-ink)}
+.brand small{font-weight:500;font-size:13px;color:var(--muted)}
+form{display:flex;gap:8px}
+input[type=search],.prange input{flex:1;height:48px;padding:0 14px;font:inherit;font-size:16px;color:var(--ink);background:var(--panel);border:1.5px solid var(--line);border-radius:12px;outline:none}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.go-btn{width:56px;height:48px;border:0;border-radius:12px;background:var(--blue);color:var(--blue-ink);font:inherit;font-weight:800;cursor:pointer}
+main{max-width:1440px;margin:0 auto;padding:14px max(3vw,14px) 40px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:7px 13px;font:inherit;font-size:14px;cursor:pointer;min-height:36px}
+.chip.on{background:var(--blue);border-color:var(--blue);color:var(--blue-ink)}
+.uchip{font-size:13px;background:var(--soft);border-radius:999px;padding:4px 10px}
+.note{background:var(--amber-bg);border-radius:12px;padding:10px 14px;font-size:14px;margin-bottom:12px}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;max-width:780px;margin-bottom:12px}
+.stat{background:var(--panel);border-radius:12px;padding:10px 14px}.stat .l{font-size:13px;color:var(--muted)}
+.stat .v{font-size:clamp(18px,2.4vw,22px);font-weight:800;white-space:nowrap}.stat .s{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.seg{display:inline-flex;flex-wrap:wrap;background:var(--panel);border-radius:12px;padding:3px}
+.seg button{border:0;background:none;font:inherit;font-size:14px;padding:8px 11px;border-radius:9px;color:var(--muted);cursor:pointer;min-height:36px}
+.seg button.on{background:var(--bg);color:var(--blue);font-weight:600}
+details.filt{background:var(--panel);border-radius:12px;padding:10px 14px;margin-bottom:12px}
+details.filt summary{cursor:pointer;font-weight:600}
+.frow{margin-top:10px}.fl{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+.prange{display:flex;gap:6px;align-items:center;max-width:420px;margin-bottom:6px}.prange input{height:42px;background:var(--bg)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px}
+.card{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;padding:14px;border:1.5px solid var(--line);border-radius:14px;text-decoration:none;background:var(--bg)}
+.card:hover{border-color:var(--blue)}.card.best{border-color:var(--green)}
+.mark{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:20px;color:#fff}
+img.mark{object-fit:contain;background:#fff;border:1px solid var(--line)}
+.t{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:2px}.meta b{color:var(--ink)}
+.specs,.badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.spec{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted)}
+.badge{font-size:12px;font-weight:600;border-radius:999px;padding:2px 8px}
+.good{background:var(--green-bg);color:var(--green)}.warn{background:var(--amber-bg);color:var(--amber)}.info{background:var(--soft);color:var(--blue)}
+.price{font-size:21px;font-weight:800;margin-top:6px;white-space:nowrap}.price small{font-size:12px;font-weight:500;color:var(--muted)}
+.sub{font-size:12.5px;color:var(--muted)}
+.open{display:inline-block;margin-top:8px;font-size:14px;font-weight:600;color:var(--blue)}
+.gwrap>details{border:1.5px solid var(--line);border-top:0;border-radius:0 0 14px 14px;padding:8px 14px;font-size:14px;margin-top:-6px}
+.gwrap>details summary{cursor:pointer;color:var(--blue);font-weight:600}
+.offer{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--line);text-decoration:none}
+.offer span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.offer span:last-child{font-weight:700;white-space:nowrap}
+.pick{border:1.5px solid var(--green);border-radius:14px;padding:14px;margin-bottom:14px;max-width:900px;display:block;text-decoration:none}
+.pick ul{margin:6px 0 0;padding-left:18px;font-size:14px;color:var(--muted)}
+.more{display:block;width:100%;max-width:420px;margin:16px auto 0;min-height:48px;border-radius:12px;border:1.5px solid var(--blue);background:var(--bg);color:var(--blue);font:inherit;font-weight:600;cursor:pointer}
+.empty{padding:40px 10px;text-align:center;color:var(--muted)}
+.home{max-width:760px}.home h1{font-size:clamp(30px,5vw,46px);line-height:1.05;text-wrap:balance;margin:12px 0}
+footer{color:var(--muted);font-size:13px;margin-top:22px}
+@media(max-width:600px){.card{grid-template-columns:44px minmax(0,1fr)}.mark{width:44px;height:44px;font-size:17px}}
+.status{margin-top:8px}.status li{margin:2px 0}
+@media(prefers-reduced-motion:no-preference){.card{transition:border-color .15s}}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div class="brand"><i></i>Product Finder <small id="snap">loading prices…</small></div>
+  <form id="f" role="search"><input id="q" type="search" placeholder="Search a product, e.g. iPhone 16, alto car, mobile under 50k" aria-label="Search" maxlength="80" autocomplete="off"><button class="go-btn" aria-label="Search">Go</button></form>
+</div></header>
+<main id="m">
+  <section class="home" id="home">
+    <h1>Every price we can read, in one place.</h1>
+    <p class="sub" id="intro">Phones, computers, cars and bikes from Pakistani stores and price guides. Typos, Roman Urdu budgets ("50k tak") and PTA wishes are understood.</p>
+    <div class="chips" id="ex"></div>
+  </section>
+  <section id="res" hidden></section>
+  <footer id="foot"></footer>
+</main>
+<script>
+{
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safe = (u) => (/^https:\/\//i.test(u || "") ? u : null);
+const rs = (v) => "Rs " + Math.round(v).toLocaleString("en-PK");
+const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+const STORE_COLOR = { "Mega.pk": "#e6261f", "Zah Computers": "#0a5cff", "PakWheels": "#00a05a", "MobileMall": "#ffb400" };
+const EXAMPLES = ["iPhone 16", "samsang galaxy a56", "alto car", "honda cd 70 bike", "mobile under 50k", "msi monitor", "rtx 4060"];
+let DATA = [], VOCAB = new Map(), STATE = null, SORT = "cheap", SHOW = 48, GROUP = true;
+let F = { stores: new Set(), pta: "all", size: "all", min: null, max: null };
+
+// ---------------------------------------------------------------- query understanding (Roman Urdu / English)
+const FILLER = new Set("sasta sasti saste cheap cheapest best acha achi achha accha behtar price prices rate rates ka ki ke ko wala wali wale chahiye chaiye mein me mai main kitne kitna kitni kahan kaha se sy new naya nayi original buy kharidna lena pakistan pk in for the a an of with and online deal deals offer offers kaunsa konsa rs pkr tak tk kam zyada".split(" "));
+const CAT = { mobile:"mobiles", mobiles:"mobiles", phone:"mobiles", phones:"mobiles", smartphone:"mobiles", laptop:"laptop", laptops:"laptop", notebook:"laptop",
+  tablet:"tablet", tab:"tablet", watch:"watch", headphone:"headphones", headphones:"headphones", earbuds:"earbuds", led:"led", tv:"led",
+  car:"cars", cars:"cars", gari:"cars", gaari:"cars", gadi:"cars", gaadi:"cars", bike:"bikes", bikes:"bikes", motorcycle:"bikes", motorbike:"bikes", monitor:"monitor" };
+const CAT_RX = { mobiles:/(^|[^a-z])(mobiles?|smartphones?)([^a-z]|$)/, laptop:/(^|[^a-z])(laptops?|notebooks?)([^a-z]|$)/, tablet:/tablet|ipad/,
+  watch:/watch/, headphones:/headphone|headset/, earbuds:/earbud|airpod|buds/, led:/(^|[^a-z])(led|tv)([^a-z]|$)/, cars:/new-cars/, bikes:/\/bikes/, monitor:/monitor/ };
+const UNIT = { k:1e3, hazar:1e3, hazaar:1e3, thousand:1e3, lac:1e5, lakh:1e5, lakhs:1e5, lacs:1e5, crore:1e7, m:1e6, million:1e6 };
+const STORES = { mega:"Mega.pk", megapk:"Mega.pk", zah:"Zah Computers", zahcomputers:"Zah Computers", pakwheels:"PakWheels", mobilemall:"MobileMall" };
+const amt = (n, u) => parseFloat(n) * (UNIT[(u || "").toLowerCase()] || 1);
+
+function understand(raw) {
+  let t = " " + raw.toLowerCase() + " ";
+  const u = { raw, min: null, max: null, pta: null, cat: null, store: null, fixes: [] };
+  if (/\bnon[\s-]*pta\b/.test(t)) { u.pta = false; t = t.replace(/\bnon[\s-]*pta\b/g, " "); }
+  else if (/\bpta(\s*approved)?\b/.test(t)) { u.pta = true; t = t.replace(/\bpta(\s*approved)?\b/g, " "); }
+  const U = "(k|hazar|hazaar|thousand|lac|lacs|lakh|lakhs|crore|million|m)?";
+  let m = t.match(new RegExp("(\\d+(?:\\.\\d+)?)\\s*" + U + "\\s*(?:-|to|se)\\s*(\\d+(?:\\.\\d+)?)\\s*" + U + "\\b"));
+  if (m && (m[2] || m[4])) { const un = m[4] || m[2]; u.min = amt(m[1], m[2] || un); u.max = amt(m[3], un); t = t.replace(m[0], " "); }
+  if (u.max == null && u.min == null) {
+    const rules = [[new RegExp("(?:under|below|upto|up to|tak|tk|max|budget|within|andar|less than|se kam)\\s*(?:rs\\.?|pkr)?\\s*(\\d+(?:\\.\\d+)?)\\s*" + U), "max"],
+      [new RegExp("(?:rs\\.?|pkr)?\\s*(\\d+(?:\\.\\d+)?)\\s*" + U + "\\s*(?:tak|tk|se kam|under|max)"), "max"],
+      [new RegExp("(?:above|over|more than|min|minimum|se zyada)\\s*(?:rs\\.?|pkr)?\\s*(\\d+(?:\\.\\d+)?)\\s*" + U), "min"],
+      [new RegExp("(?:rs\\.?|pkr)?\\s*(\\d+(?:\\.\\d+)?)\\s*" + U + "\\s*(?:se zyada|above|plus)"), "min"],
+      [new RegExp("\\b(\\d+(?:\\.\\d+)?)\\s*(k|hazar|hazaar|lakh|lac|lakhs|crore)\\b"), "max"]];
+    for (const [rx, key] of rules) { const mm = t.match(rx); if (mm && amt(mm[1], mm[2]) >= 500) { u[key] = amt(mm[1], mm[2]); t = t.replace(mm[0], " "); break; } }
+  }
+  const words = [];
+  for (const w of norm(t).split(" ").filter(Boolean)) {
+    if (STORES[w] && norm(raw).split(" ").length > 1) { u.store = STORES[w]; continue; }
+    if (FILLER.has(w)) continue;
+    if (CAT[w]) { u.cat = u.cat || CAT[w]; continue; }
+    words.push(w);
+  }
+  u.q = words.map((w) => {   // spelling: snap unknown words to the closest word in the product names
+    if (VOCAB.has(w) || /\d/.test(w) || w.length < 4) return w;
+    let best = null, bd = 9;
+    for (const [v, n] of VOCAB) { if (Math.abs(v.length - w.length) > 2 || v[0] !== w[0]) continue;
+      const d = lev(w, v, 2); if (d < bd || (d === bd && n > (VOCAB.get(best) || 0))) { bd = d; best = v; } }
+    if (best && bd <= (w.length >= 7 ? 2 : 1)) { u.fixes.push([w, best]); return best; }
+    return w;
+  }).join(" ");
+  return u;
+}
+function lev(a, b, lim) {
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) { const cur = [i]; let low = i;
+    for (let j = 1; j <= b.length; j++) { cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] !== b[j - 1])); low = Math.min(low, cur[j]); }
+    if (low > lim) return lim + 1; prev = cur; }
+  return prev[b.length];
+}
+
+// ---------------------------------------------------------------- matching (typos, spacing, model numbers)
+function joinModel(qt) {
+  const out = [];
+  for (let i = 0; i < qt.length; i++) {
+    const t = qt[i];
+    if (t.length === 1 && /[a-z]/.test(t) && /^\d+$/.test(qt[i + 1] || "")) { out.push(t + qt[i + 1]); i++; continue; }
+    const m = t.match(/^([a-z]{3,})(\d{1,3})$/);
+    if (m) out.push(m[1], m[2]); else out.push(t);
+  }
+  return out;
+}
+function wordScore(t, words, sq) {
+  if (words.includes(t)) return 1;
+  if (/^\d+$/.test(t)) { const rx = new RegExp("^[a-z]*" + t + "(gb|tb|mp|mah|hz|w|inch|in|mm|k|cc)?$"); return words.some((w) => rx.test(w)) ? 0.9 : 0; }
+  if (words.some((w) => w.startsWith(t))) return 0.9;
+  if (t.length >= 3 && sq.includes(t)) return 0.8;
+  if (t.length >= 4 && !/\d/.test(t)) { const lim = t.length < 8 ? 1 : 2; if (words.some((w) => (w[0] === t[0] || t.length >= 6) && lev(t, w, lim) <= lim)) return 0.7; }
+  return 0;
+}
+function search(u) {
+  const qt = joinModel(u.q.split(" ").filter(Boolean));
+  let pool = DATA;
+  if (u.store) pool = pool.filter((d) => d.s === u.store);
+  if (u.cat) { const rx = CAT_RX[u.cat]; const byUrl = pool.filter((d) => rx.test(d.k)); pool = byUrl.length ? byUrl : pool.filter((d) => rx.test(d.w.join(" "))); }
+  if (!qt.length && !u.cat) return { hits: [], hidden: 0 };
+  let hits = [];
+  for (const d of pool) {
+    if (!qt.length) { hits.push({ d, m: 1 }); continue; }
+    const sc = qt.map((t) => wordScore(t, d.w, d.sq));
+    const mn = Math.min(...sc);
+    if (mn > 0) hits.push({ d, m: mn, avg: sc.reduce((a, b) => a + b, 0) / sc.length });
+  }
+  let hidden = 0;
+  if (hits.some((h) => h.m >= 0.8)) { const b = hits.length; hits = hits.filter((h) => h.m >= 0.8); hidden = b - hits.length; }
+  let out = hits.map((h) => h.d);
+  const bf = out.length;
+  out = out.filter((d) => (u.max == null || d.p <= u.max) && (u.min == null || d.p >= u.min) && (u.pta == null || d.a.pta == null || d.a.pta === u.pta));
+  return { hits: out, hidden, filtered: bf - out.length };
+}
+
+// ---------------------------------------------------------------- grouping, deals, smart pick (local AI rules)
+const EDITION = new Set("pro max plus ultra mini lite fe air se neo edge fold flip prime power note".split(" "));
+const NOISE = new Set("pta non approved official warranty single dual sim esim storage ram gb tb with and new box pack price in pakistan mobile phone smartphone black white blue red green gold silver grey gray purple pink yellow orange titanium natural".split(" "));
+function core(d) { return d.w.filter((w) => !NOISE.has(w) && !/^\d+(gb|tb)?$/.test(w)).slice(0, 6); }
+function groupKey(d) {
+  const c = core(d); const model = c.filter((w) => /\d/.test(w)).sort().join("+"); const ed = c.filter((w) => EDITION.has(w)).sort().join("+");
+  return [c.filter((w) => !/\d/.test(w) && !EDITION.has(w)).slice(-2).join(" "), model, ed, d.a.storage || "", d.a.ram || "", d.a.pta ?? ""].join("|");
+}
+function enrich(items) {
+  const groups = new Map();
+  for (const d of items) if (!d.g) { const k = groupKey(d); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(d); }
+  const guides = items.filter((d) => d.g);
+  for (const d of items) {
+    d.deal = null;
+    if (d.g || d.o) continue;
+    const c = core(d); const model = c.filter((w) => /\d/.test(w)).join("+"); const ed = c.filter((w) => EDITION.has(w)).join("+");
+    const ref = d.a.pta === true && guides.find((g) => { const gc = core(g); return gc.filter((w) => /\d/.test(w)).join("+") === model && gc.filter((w) => EDITION.has(w)).join("+") === ed && gc.some((w) => c.includes(w) && !/\d/.test(w)); });
+    if (ref && d.p <= ref.p * 0.95) d.deal = ["good", "Good price", `${Math.round((1 - d.p / ref.p) * 100)}% below market price on ${ref.s}`];
+    const g = groups.get(groupKey(d)); const live = g.filter((x) => !x.o);
+    if (!d.deal && live.length >= 2) { const med = live.map((x) => x.p).sort((a, b) => a - b)[Math.floor(live.length / 2)];
+      if (d.p <= med * 0.95) d.deal = ["good", "Good price", `${Math.round((1 - d.p / med) * 100)}% below typical (${live.length} offers)`];
+      else if (d.p >= med * 1.08) d.deal = ["warn", "Above typical", `${Math.round((d.p / med - 1) * 100)}% above typical (${live.length} offers)`]; }
+  }
+  const buy = items.filter((d) => !d.g && !d.o);
+  const cheapest = buy.length ? buy.reduce((a, b) => (b.p < a.p ? b : a)) : null;
+  let pick = null;
+  if (buy.length >= 2) {
+    const sc = (d) => (cheapest.p / d.p) + (d.deal?.[0] === "good" ? 0.15 : 0) + (d.a.pta === true ? 0.1 : 0) + (d.r ? (d.r - 3) / 20 : 0);
+    const best = buy.reduce((a, b) => (sc(b) > sc(a) ? b : a));
+    const why = [best === cheapest ? "Lowest price in these results" : "Close to the lowest price with a better deal"];
+    if (best.deal?.[0] === "good") why.push(`${best.deal[1]}: ${best.deal[2]}`);
+    if (best.a.pta === true) why.push("PTA approved");
+    if (best.r) why.push(`Rated ${best.r.toFixed(1)}${best.n ? ` (${best.n.toLocaleString()} reviews)` : ""}`);
+    pick = { d: best, why };
+  }
+  return { groups, cheapest, pick };
+}
+
+// ---------------------------------------------------------------- render
+function passes(d) {
+  if (F.stores.size && !F.stores.has(d.s)) return false;
+  if (F.pta === "pta" && d.a.pta !== true) return false;
+  if (F.pta === "non" && d.a.pta !== false) return false;
+  if (F.size !== "all" && d.a.storage !== F.size) return false;
+  if (F.min != null && d.p < F.min) return false;
+  if (F.max != null && d.p > F.max) return false;
+  return true;
+}
+function card(d, cheapest, extra = "") {
+  const url = safe(d.u);
+  const badges = [];
+  if (d.g) badges.push(["info", "Market price"]);
+  if (d.o) badges.push(["warn", "Out of stock"]);
+  if (cheapest && d === cheapest) badges.push(["good", "Cheapest"]);
+  if (d.deal) badges.push(d.deal);
+  const a = d.a, specs = [a.storage, a.ram && a.ram + " RAM", a.pta === true ? "PTA" : a.pta === false ? "Non-PTA" : null, a.sim].filter(Boolean);
+  const diff = cheapest && !d.g && !d.o && d.p > cheapest.p ? `<div class="sub">+${rs(d.p - cheapest.p)} vs cheapest</div>` : "";
+  const img = safe(d.i);
+  const markDiv = `<div class="mark" style="background:${STORE_COLOR[d.s] || "#5d6573"}" aria-hidden="true">${esc(d.s[0])}</div>`;
+  // product photo where the host allows remote images; the store's letter mark otherwise
+  const inner = `${img ? `<img class="mark" src="${esc(img)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-s="${esc(d.s)}">` : markDiv}<div>
+    <div class="t">${esc(d.t)}</div><div class="meta"><b>${esc(d.s)}</b>${d.r ? `<span>★ ${d.r.toFixed(1)}${d.n ? ` (${d.n.toLocaleString()})` : ""}</span>` : ""}</div>
+    ${specs.length ? `<div class="specs">${specs.map((s) => `<span class="spec">${esc(s)}</span>`).join("")}</div>` : ""}
+    ${badges.length ? `<div class="badges">${badges.map(([c, t, w]) => `<span class="badge ${c}"${w ? ` title="${esc(w)}"` : ""}>${esc(t)}</span>`).join("")}</div>` : ""}
+    <div class="price">${d.pm ? "<small>from</small> " : ""}${rs(d.p)}</div>${d.pm ? `<div class="sub">up to ${rs(d.pm)} (top variant)</div>` : ""}${diff}
+    ${url ? `<span class="open">${d.g ? "View price guide ›" : "Go to store ›"}</span>` : ""}</div>`;
+  const c = `${url ? `<a class="card${d === cheapest ? " best" : ""}" href="${esc(url)}" target="_blank" rel="noopener noreferrer">` : `<div class="card">`}${inner}${url ? "</a>" : "</div>"}`;
+  return extra ? `<div class="gwrap">${c}${extra}</div>` : c;
+}
+function render() {
+  const S = STATE, box = $("#res");
+  const view = S.items.filter(passes);
+  const sorted = [...view].sort(SORT === "costly" ? (a, b) => (a.o - b.o) || b.p - a.p : SORT === "rating" ? (a, b) => (b.r || 0) - (a.r || 0) : (a, b) => (a.o - b.o) || a.p - b.p);
+  const buy = view.filter((d) => !d.g && !d.o), priced = buy.length ? buy : view.filter((d) => !d.o);
+  const ch = S.info.cheapest && view.includes(S.info.cheapest) ? S.info.cheapest : null;
+  const stores = [...new Set(S.items.map((d) => d.s))];
+  const sizes = [...new Set(S.items.map((d) => d.a.storage).filter(Boolean))];
+  const u = S.u, chips = [];
+  if (u.q && u.q !== norm(u.raw)) chips.push(`Searched: <b>${esc(u.q)}</b>`);
+  u.fixes.forEach(([a, b]) => chips.push(`Spelling: ${esc(a)} → <b>${esc(b)}</b>`));
+  if (u.cat) chips.push(`Category: <b>${esc(u.cat)}</b>`);
+  if (u.store) chips.push(`Store: <b>${esc(u.store)}</b>`);
+  if (u.max != null || u.min != null) chips.push(`Budget: <b>${u.min != null ? rs(u.min) : ""}${u.min != null && u.max != null ? " – " : ""}${u.max != null ? (u.min == null ? "up to " : "") + rs(u.max) : "+"}</b>`);
+  if (u.pta != null) chips.push(`<b>${u.pta ? "PTA approved" : "Non-PTA"}</b>`);
+  // grouped list: each product once, other offers folded under it
+  let list = "", shown = 0;
+  const done = new Set();
+  for (const d of sorted) {
+    if (shown >= SHOW) break;
+    if (done.has(d)) continue;
+    if (GROUP && !d.g) {
+      const g = (S.info.groups.get(groupKey(d)) || [d]).filter((x) => passes(x));
+      g.forEach((x) => done.add(x));
+      const rest = g.filter((x) => x !== d);
+      list += card(d, ch, rest.length ? `<details><summary>+${rest.length} more offer${rest.length > 1 ? "s" : ""}</summary>${rest.map((x) => `<a class="offer" href="${esc(safe(x.u) || "#")}" target="_blank" rel="noopener noreferrer"><span>${esc(x.s)} · ${esc(x.t)}</span><span>${rs(x.p)}</span></a>`).join("")}</details>` : "");
+    } else { done.add(d); list += card(d, ch); }
+    shown++;
+  }
+  const remaining = sorted.filter((d) => !done.has(d)).length;
+  const p = S.info.pick && view.includes(S.info.pick.d) ? S.info.pick : null;
+  box.innerHTML = `
+    ${chips.length ? `<div class="chips"><span class="sub">Understood:</span>${chips.map((c) => `<span class="uchip">${c}</span>`).join("")}</div>` : ""}
+    ${S.filtered ? `<div class="note">${S.filtered} products are outside your budget or PTA wish and are hidden.</div>` : ""}
+    ${p ? `<a class="pick" href="${esc(safe(p.d.u) || "#")}" target="_blank" rel="noopener noreferrer"><span class="badge good">Smart pick</span> <span class="sub">chosen by the local rules from price, match, rating and market price</span>
+      <div class="t" style="margin-top:6px">${esc(p.d.t)}</div><div class="meta"><b>${esc(p.d.s)}</b><span class="price" style="margin:0">${rs(p.d.p)}</span></div><ul>${p.why.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></a>` : ""}
+    ${priced.length ? `<div class="summary"><div class="stat"><div class="l">${buy.length ? "Cheapest" : "Lowest market price"}</div><div class="v">${rs(Math.min(...priced.map((d) => d.p)))}</div><div class="s">${esc(priced.reduce((a, b) => (b.p < a.p ? b : a)).s)}</div></div>
+      <div class="stat"><div class="l">Price range</div><div class="v">${rangeTxt(priced)}</div><div class="s">${priced.length} offers</div></div>
+      <div class="stat"><div class="l">Sources</div><div class="v">${stores.length}</div><div class="s">${esc(stores.join(", "))}</div></div></div>` : ""}
+    ${S.items.length ? `<div class="tools"><span class="sub">${view.length === S.items.length ? `${view.length} results` : `${view.length} of ${S.items.length} results`}${S.hidden ? ` · ${S.hidden} look-alikes hidden` : ""}</span>
+      <button type="button" class="chip ${GROUP ? "on" : ""}" id="grp">Group same product</button>
+      <div class="seg">${[["cheap", "Lowest price"], ["costly", "Highest price"], ["rating", "Rating"]].map(([k, l]) => `<button type="button" data-s="${k}" class="${SORT === k ? "on" : ""}">${l}</button>`).join("")}</div></div>
+    <details class="filt"${F.stores.size || F.pta !== "all" || F.size !== "all" || F.min != null || F.max != null ? " open" : ""}><summary>Filters</summary>
+      <div class="frow"><span class="fl">Price (Rs)</span><div class="prange"><input id="pmin" inputmode="numeric" placeholder="Min" value="${F.min ?? ""}" aria-label="Minimum price"><span>–</span><input id="pmax" inputmode="numeric" placeholder="Max" value="${F.max ?? ""}" aria-label="Maximum price"></div></div>
+      ${stores.length > 1 ? `<div class="frow"><span class="fl">Stores</span><div class="chips">${["All", ...stores].map((s) => `<button type="button" class="chip ${s === "All" ? (F.stores.size ? "" : "on") : F.stores.has(s) ? "on" : ""}" data-st="${esc(s)}">${esc(s)}</button>`).join("")}</div></div>` : ""}
+      ${S.items.some((d) => d.a.pta != null) ? `<div class="frow"><span class="fl">PTA</span><div class="chips">${[["all", "All"], ["pta", "PTA approved"], ["non", "Non-PTA"]].map(([k, l]) => `<button type="button" class="chip ${F.pta === k ? "on" : ""}" data-pta="${k}">${l}</button>`).join("")}</div></div>` : ""}
+      ${sizes.length > 1 ? `<div class="frow"><span class="fl">Storage</span><div class="chips">${["all", ...sizes].map((s) => `<button type="button" class="chip ${F.size === s ? "on" : ""}" data-sz="${esc(s)}">${s === "all" ? "All" : esc(s)}</button>`).join("")}</div></div>` : ""}
+    </details>
+    <div class="grid">${list || `<div class="empty">Nothing matches these filters.</div>`}</div>
+    ${remaining ? `<button type="button" class="more" id="more">Load more (${remaining} left)</button>` : ""}`
+    : `<div class="empty">${u.max != null || u.min != null ? "Nothing within that budget. Try a higher budget." : "No products found. Try other words, e.g. just the model name."}</div>`}`;
+  box.querySelectorAll("[data-s]").forEach((b) => b.onclick = () => { SORT = b.dataset.s; render(); });
+  box.querySelectorAll("[data-st]").forEach((b) => b.onclick = () => { const s = b.dataset.st; if (s === "All") F.stores.clear(); else F.stores.has(s) ? F.stores.delete(s) : F.stores.add(s); SHOW = 48; render(); });
+  box.querySelectorAll("[data-pta]").forEach((b) => b.onclick = () => { F.pta = b.dataset.pta; render(); });
+  box.querySelectorAll("[data-sz]").forEach((b) => b.onclick = () => { F.size = b.dataset.sz; render(); });
+  const num = (el) => { const v = Number(String(el.value).replace(/[^\d]/g, "")); return v > 0 ? v : null; };
+  const pmin = $("#pmin"), pmax = $("#pmax");
+  if (pmin) pmin.onchange = () => { F.min = num(pmin); render(); };
+  if (pmax) pmax.onchange = () => { F.max = num(pmax); render(); };
+  const grp = $("#grp"); if (grp) grp.onclick = () => { GROUP = !GROUP; render(); };
+  const more = $("#more"); if (more) more.onclick = () => { SHOW += 48; render(); };
+  box.querySelectorAll("img.mark").forEach((im) => im.addEventListener("error", () => {
+    const m = document.createElement("div"); m.className = "mark"; m.setAttribute("aria-hidden", "true");
+    m.style.background = STORE_COLOR[im.dataset.s] || "#5d6573"; m.textContent = (im.dataset.s || "?")[0]; im.replaceWith(m);
+  }));
+}
+function rangeTxt(p) {
+  const v = p.map((d) => d.p), lo = Math.min(...v), hi = Math.max(...v);
+  const k = (x) => (x >= 1e7 ? (x / 1e7).toFixed(2) + " cr" : x >= 1e5 ? (x / 1e5).toFixed(1) + " lakh" : Math.round(x).toLocaleString("en-PK"));
+  return lo === hi ? rs(lo) : `${k(lo)} – ${k(hi)}`;
+}
+function go(q) {
+  q = q.trim();
+  if (q.length < 2 || !DATA.length) return;
+  $("#q").value = q;
+  $("#home").hidden = true; $("#res").hidden = false;
+  F = { stores: new Set(), pta: "all", size: "all", min: null, max: null }; SHOW = 48;
+  const u = understand(q), r = search(u);
+  STATE = { u, items: r.hits, hidden: r.hidden, filtered: r.filtered, info: enrich(r.hits) };
+  render();
+  try { localStorage.setItem("pf-last", q); } catch (e) {}
+  const slug = norm(q).replace(/ /g, "-").slice(0, 60);  // bookmarkable: #alto-car
+  if (slug && location.hash.slice(1) !== slug) history.replaceState(null, "", "#" + slug);
+}
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (h) go(h.replace(/-/g, " ")); });
+
+$("#f").addEventListener("submit", (e) => { e.preventDefault(); go($("#q").value); });
+$("#ex").innerHTML = EXAMPLES.map((x) => `<button type="button" class="chip">${esc(x)}</button>`).join("");
+$("#ex").querySelectorAll(".chip").forEach((c) => c.onclick = () => go(c.textContent));
+
+fetch("data.json").then((r) => r.json()).then((j) => {
+  DATA = j.items.filter((d) => d && d.p > 0).map((d) => { const w = norm(d.t).split(" ").filter(Boolean); return { ...d, a: d.a || {}, k: d.k || "", w, sq: w.join(""), o: d.o ? 1 : 0, g: d.g ? 1 : 0 }; });
+  for (const d of DATA) for (const w of d.w) if (w.length >= 3 && !/^\d+$/.test(w)) VOCAB.set(w, (VOCAB.get(w) || 0) + 1);
+  const when = new Date(j.time);
+  $("#snap").textContent = `${DATA.length.toLocaleString()} prices · updated ${when.toLocaleDateString(undefined, { day: "numeric", month: "short" })}`;
+  const srcs = Object.keys(j.stores);
+  $("#intro").textContent = `Phones, computers, cars and bikes from ${srcs.join(", ")}. Typos, Roman Urdu budgets ("50k tak") and PTA wishes are understood.`;
+  const foot = $("#foot");
+  foot.textContent = `Prices were collected from the store websites on ${when.toLocaleString()} and may have changed since. Confirm on the store before buying.`;
+  const st = j.status || {};
+  if (Object.keys(st).length) {   // which stores were read, and which could not be
+    const d = document.createElement("details"); d.className = "status";
+    const sm = document.createElement("summary"); sm.textContent = `Stores checked in the last update (${srcs.length} with prices)`; d.appendChild(sm);
+    const ul = document.createElement("ul");
+    for (const [k, v] of Object.entries(st)) { const li = document.createElement("li"); li.textContent = `${k}: ${v}`; ul.appendChild(li); }
+    d.appendChild(ul); foot.appendChild(d);
+  }
+  let last = location.hash.slice(1).replace(/-/g, " ");
+  if (!last) { try { last = localStorage.getItem("pf-last"); } catch (e) {} }
+  if (last) go(last);
+}).catch(() => { $("#snap").textContent = "prices could not be loaded"; });
+}
+</script>
+</body>
+</html>

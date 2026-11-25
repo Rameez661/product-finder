@@ -1,0 +1,7 @@
+# local caches and secrets: never upload
+data/
+config.json
+__pycache__/
+*.pyc
+*.tmp
+hosted/data.json
