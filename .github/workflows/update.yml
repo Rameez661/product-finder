@@ -6,6 +6,9 @@ on:
   workflow_dispatch:       # "Run workflow" button on the Actions tab
   push:
     branches: [main]
+    paths-ignore:        # docs-only changes do not need a new price run
+      - "README.md"
+      - "**/*.md"
 
 permissions:
   contents: read
