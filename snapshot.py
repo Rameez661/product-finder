@@ -32,6 +32,15 @@ def _log():
 
 def crawl(store):
     try:
+        return _crawl(store)
+    except Exception as e:  # one store's problem must never stop the others
+        _progress[store["name"]] = f"failed ({type(e).__name__}: {str(e)[:80]})"
+        _log()
+        return []
+
+
+def _crawl(store):
+    try:
         idx = direct.ensure_index(store, wait=True)
     except direct.StoreError as e:
         _progress[store["name"]] = f"skipped ({e.note})"
@@ -47,6 +56,8 @@ def crawl(store):
             return e, direct._page(store, e)
         except direct.StoreError as err:
             return e, err
+        except Exception as err:  # one bad page must never stop the run
+            return e, direct.StoreError("error", f"{type(err).__name__}: {str(err)[:80]}")
 
     pool = ThreadPoolExecutor(max_workers=2)
     try:

@@ -111,6 +111,10 @@ def fetch(url, timeout=15):
                 h.trip("blocked", f"Site not reachable from this network ({type(reason).__name__})", RETRY_BLOCKED_S)
                 raise StoreError("blocked", "Site not reachable from this network")
             raise StoreError("neterror", f"Network problem ({type(reason).__name__})")
+        except StoreError:
+            raise
+        except Exception as e:  # http.client.IncompleteRead, InvalidURL, zlib.error, ...
+            raise StoreError("error", f"Page could not be read ({type(e).__name__})")
         finally:
             h.last = time.time()
 

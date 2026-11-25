@@ -41,6 +41,7 @@ jobs:
           restore-keys: store-cache-
 
       - name: Collect prices (robots.txt respected, max 2 requests at a time per store)
+        continue-on-error: true   # a problem here must not stop the site from being built from what was collected
         env:
           SNAPSHOT_MAX_PAGES: "3000"
           SNAPSHOT_MAX_MINUTES: "40"
