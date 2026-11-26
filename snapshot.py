@@ -8,6 +8,7 @@ at least 0.5 s apart, cached pages reused. Stores that are blocked here are skip
 import json
 import os
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
@@ -24,10 +25,15 @@ PROGRESS = os.path.join(DATA_DIR, "snapshot_progress.txt")
 _progress = {}
 
 
+_log_lock = threading.Lock()
+
+
 def _log():
-    with open(PROGRESS, "w", encoding="utf-8") as f:
-        for k, v in _progress.items():
-            f.write(f"{k}: {v}\n")
+    # every store runs in its own thread: one writer at a time, and a copy of the dict
+    with _log_lock:
+        with open(PROGRESS, "w", encoding="utf-8") as f:
+            for k, v in list(_progress.items()):
+                f.write(f"{k}: {v}\n")
 
 
 def crawl(store):
@@ -99,7 +105,7 @@ def main():
         results = list(ex.map(crawl, stores))
     items = [x for r in results for x in r]
     snap = {"time": time.strftime("%Y-%m-%dT%H:%M:%S"), "count": len(items),
-            "stores": {k: v for k, v in _progress.items()}, "items": items}
+            "stores": dict(_progress), "items": items}
     tmp = OUT + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(snap, f, ensure_ascii=False, separators=(",", ":"))
